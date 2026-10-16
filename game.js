@@ -28,7 +28,7 @@ const fresh=()=>({round:0,teams:profiles.map((p,i)=>({id:i,name:'Team '+String.f
 let state;try{state=JSON.parse(localStorage.getItem(KEY))||fresh();if(!Array.isArray(state.teams)||state.teams.length!==4)throw Error('invalid')}catch{state=fresh()}
 const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),gbp=n=>'£'+Math.round(n).toLocaleString('en-GB');
 const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
-function tab(id){for(const s of ['student','lecturer','guide'])$(s).hidden=s!==id;render()}
+function tab(id){for(const s of ['student','lecturer','guide','cloud'])$(s).hidden=s!==id;render()}
 function render(){const previous=$('team').value||'0';$('team').innerHTML=state.teams.map(t=>'<option value="'+t.id+'">'+t.name+'</option>').join('');$('team').value=previous;const t=state.teams[Number($('team').value)]||state.teams[0],p=profiles[t.profile],r=rounds[state.round];
 $('profile').innerHTML='<div class="card"><h3>'+p.name+'</h3><p>'+p.description+'</p><p>Cash: '+gbp(t.cash)+' · Annual carbon: '+t.carbon.toFixed(2)+' tCO₂e · Resilience: '+t.resilience+'/100 · Comfort: '+t.comfort+'/100</p></div>';
 $('brief').innerHTML='<div class="card"><strong>Round '+(state.round+1)+'/6 · '+r.year+': '+r.title+'</strong><p>'+r.brief+'</p><p class="muted">The future pathway remains uncertain.</p></div>';
