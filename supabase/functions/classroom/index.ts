@@ -43,22 +43,9 @@ Deno.serve(async req=>{
  }
  if(op==='advance'){
  if(!host)return reply({error:'Lecturer access required'},403);
- if(s.finished||all?.length!==4||all.some(t=>!t.pending))return reply({error:'All four teams must submit before advancing'},409);
- // Protect against concurrent lecturer advances by acquiring the session row using a conditional update.
- const next=s.round===5?5:s.round+1;
- const {data:locked,error:le}=await db.from('sessions').update({round:next,finished:s.round===5}).eq('id',s.id).eq('round',s.round).eq('finished',false).select('id');
- if(le)throw le;if(!locked?.length)return reply({error:'Round already advanced'},409);
- for(const t of all){
- const d=t.pending,selected=d.ids.map((id:string)=>actions.find(a=>a[0]===id)!);
- const st={...t.state};
- st.cash=Math.max(0,st.cash-selected.reduce((n:number,a:any)=>n+a[1],0)+shocks[s.round][0]+(d.strategy==='conserve'?250:0));
- st.carbon=clamp(st.carbon+selected.reduce((n:number,a:any)=>n+a[2],0)+shocks[s.round][1],.3,20);
- st.resilience=clamp(st.resilience+selected.reduce((n:number,a:any)=>n+a[3],0)+shocks[s.round][2]+(d.strategy==='precaution'?2:0),0,100);
- st.comfort=clamp(st.comfort+selected.reduce((n:number,a:any)=>n+a[4],0)+shocks[s.round][3],0,100);
- st.owned=[...st.owned,...d.ids];st.history=[...st.history,{round:s.round,ids:d.ids,strategy:d.strategy,reason:d.reason}];
- const {error:ue}=await db.from('teams').update({state:st,pending:null}).eq('session_id',s.id).eq('team_id',t.team_id);if(ue)throw ue;
- }
- return reply({ok:true,round:next,finished:s.round===5});
+ const {data,error}=await db.rpc('advance_classroom',{p_session:s.id,p_host_token:token});
+ if(error)return reply({error:error.message},409);
+ return reply(data);
  }
  return reply({error:'Unknown operation'},400);
  }catch(e){return reply({error:'Request could not be completed',detail:String(e)},500)}
